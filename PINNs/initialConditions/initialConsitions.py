@@ -2,11 +2,14 @@ from abc import ABC, abstractmethod
 import torch.nn as nn
 import torch
 import numpy as np
+from typing import Dict
 
 
 class InitialCondition(ABC):
-    def __init__(self, inputs: np.ndarray, name: str):
+    def __init__(self, inputs: np.ndarray, input_index_map: Dict[str, int], output_index_map: Dict[str, int], name: str):
         self._inputs = torch.from_numpy(inputs).float()
+        self._input_index_map = input_index_map
+        self._output_index_map = output_index_map
         self._name = name
 
     def inputs_number(self) -> int:
@@ -18,8 +21,8 @@ class InitialCondition(ABC):
 
 
 class DirichletIC(InitialCondition):
-    def __init__(self, inputs: np.ndarray, values: np.ndarray, name: str = "dirichlet"):
-        super().__init__(inputs, name)
+    def __init__(self, inputs: np.ndarray, values: np.ndarray, input_index_map: Dict[str, int], output_index_map: Dict[str, int], name: str = "dirichlet"):
+        super().__init__(inputs, input_index_map, output_index_map, name)
         self._values = torch.from_numpy(values).float()
 
     def computeLoss(self, network: nn.Module, filter_indice: np.ndarray, device: torch.device) -> torch.Tensor:

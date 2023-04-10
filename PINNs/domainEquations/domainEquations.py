@@ -2,11 +2,15 @@ from abc import ABC, abstractmethod
 import torch.nn as nn
 import torch
 import numpy as np
+from typing import Dict
 
 
 class DomainEquation(ABC):
-    def __init__(self, inputs: np.ndarray, name: str):
+    # : Dict[str, int]
+    def __init__(self, inputs: np.ndarray, input_index_map: Dict[str, int], output_index_map: Dict[str, int], name: str):
         self._inputs = torch.from_numpy(inputs).float()
+        self._input_index_map = input_index_map
+        self._output_index_map = output_index_map
         self._name = name
 
     def inputs_number(self) -> int:
@@ -18,8 +22,8 @@ class DomainEquation(ABC):
 
 
 class Burgers1D(DomainEquation):
-    def __init__(self, inputs: np.ndarray, name: str = "burger 1D"):
-        super().__init__(inputs, name)
+    def __init__(self,inputs: np.ndarray, input_index_map: Dict[str, int], output_index_map: Dict[str, int], name: str = "burger 1D"):
+        super().__init__(inputs, input_index_map,output_index_map,name)
 
     # https://zhuanlan.zhihu.com/p/83172023
     # https://stackoverflow.com/questions/69148622/difference-between-autograd-grad-and-autograd-backward
@@ -35,14 +39,14 @@ class Burgers1D(DomainEquation):
         results = network(device_filtered_inputs)
 
         gradient1 = torch.autograd.grad(inputs=filtered_inputs, outputs=results, create_graph=True, retain_graph=True,
-                                        grad_outputs=torch.ones_like(results))[0]
+                                        grad_outputs=torch.ones_like(results))[self._output_index_map['u']]
 
-        du_dx = gradient1[:, 0]
-        du_dt = gradient1[:, 1]
+        du_dx = gradient1[:, self._input_index_map['x']]
+        du_dt = gradient1[:, self._input_index_map['t']]
 
         gradient2 = torch.autograd.grad(inputs=filtered_inputs, outputs=du_dx, create_graph=True, retain_graph=True,
-                                        grad_outputs=torch.ones_like(du_dx))[0]
-        d2u_dx2 = gradient2[:, 0]
+                                        grad_outputs=torch.ones_like(du_dx))[self._output_index_map['u']]
+        d2u_dx2 = gradient2[:, self._input_index_map['x']]
 
         nu = torch.tensor(0.01/np.pi)
         f = du_dt + \

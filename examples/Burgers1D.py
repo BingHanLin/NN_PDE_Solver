@@ -1,15 +1,15 @@
-import torch.optim
-import torch
-import numpy as np
-from datetime import datetime
 import argparse
+from datetime import datetime
+import numpy as np
+import torch
+import torch.optim
 
-from PINNs.model import LinearNetwork
-from PINNs.solver import PINNsPDESolver
-from PINNs.domainEquations import Burgers1D
-from PINNs.boundaryConditions import DirichletBC
-from PINNs.initialConditions import DirichletIC
 from PINNs.plot import plotUtil
+from PINNs.initialConditions import DirichletIC
+from PINNs.boundaryConditions import DirichletBC
+from PINNs.domainEquations import Burgers1D
+from PINNs.solver import PINNsPDESolver
+from PINNs.model import LinearNetwork
 
 
 def get_default_device():
@@ -42,13 +42,8 @@ if __name__ == "__main__":
     domain_t = np.random.uniform(0.0, 1.0, size=(500))
     domain_input = np.stack((domain_x, domain_t), -1)
 
-    # plotUtil.plot_scatter(domain_x, domain_t)
-
-    pre_input_meshgrid = np.meshgrid(np.linspace(-1.0, 1.0, num=300),
-                                     np.linspace(0.0, 1.0, num=150))
-    pre_x = pre_input_meshgrid[0].reshape(-1, 1)
-    pre_t = pre_input_meshgrid[1].reshape(-1, 1)
-    pre_input = np.stack((pre_x, pre_t), -1)
+    input_index_map = {'x': 0, 't': 1}
+    output_index_map = {'u': 0}
 
     if args.model:
         model = torch.load(args.model)
@@ -59,17 +54,27 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(model.parameters(), lr=0.00025)
 
         solver = PINNsPDESolver()
-        solver.set_domain_equation(Burgers1D(domain_input))
-        solver.add_boundary_condition(DirichletBC(bc_input, bc_value))
-        solver.add_initial_condition(DirichletIC(ic_input, ic_value))
+        solver.set_domain_equation(
+            Burgers1D(domain_input, input_index_map, output_index_map))
+        solver.add_boundary_condition(DirichletBC(
+            bc_input, bc_value, input_index_map, output_index_map))
+        solver.add_initial_condition(DirichletIC(
+            ic_input, ic_value, input_index_map, output_index_map))
 
         print(f"Solving with device: {device}.")
-        solver.solve(1, 20, model, optimizer, device)
+        solver.solve(500, 20, model, optimizer, device)
 
         # datetime object containing current date and time
         now_time = datetime.now()
         now_time_string = now_time.strftime("%d%m%Y_%H-%M-%S")
         torch.save(model, now_time_string)
+
+    # plot result
+    pre_input_meshgrid = np.meshgrid(np.linspace(-1.0, 1.0, num=300),
+                                     np.linspace(0.0, 1.0, num=150))
+    pre_x = pre_input_meshgrid[0].reshape(-1, 1)
+    pre_t = pre_input_meshgrid[1].reshape(-1, 1)
+    pre_input = np.stack((pre_x, pre_t), -1)
 
     result = model(torch.from_numpy(pre_input).float().to(device)).to("cpu")
 
