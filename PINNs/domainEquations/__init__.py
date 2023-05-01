@@ -1,1 +1,1 @@
-from .domainEquations import DomainEquation, Burgers1D
+from .domainEquations import DomainEquation, Burgers1D, NavierStokes
