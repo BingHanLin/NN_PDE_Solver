@@ -57,7 +57,7 @@ if __name__ == "__main__":
         solver.set_domain_equation(
             Burgers1D(domain_input, input_index_map, output_index_map))
         solver.add_boundary_condition(DirichletBC(
-            bc_input, bc_value, input_index_map, output_index_map))
+            bc_input, bc_value, input_index_map, output_index_map, ['u']))
         solver.add_initial_condition(DirichletIC(
             ic_input, ic_value, input_index_map, output_index_map))
 
