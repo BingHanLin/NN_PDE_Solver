@@ -16,16 +16,17 @@ def plot_imshow(x: np.ndarray, y: np.ndarray, z: np.ndarray):
     plt.show()
 
 
-def plot_contour(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+def plot_contour(x_list: np.ndarray, y_list: np.ndarray, z_list: np.ndarray):
 
-    xi = np.linspace(x.min(), x.max(), 100)
-    yi = np.linspace(y.min(), y.max(), 100)
+    xi, yi = np.linspace(x_list.min(), x_list.max(), 300), np.linspace(
+        y_list.min(), y_list.max(), 300)
     xi, yi = np.meshgrid(xi, yi)
 
-    rbf = scipy.interpolate.Rbf(x, y, z, function='linear')
-    zi = rbf(xi, yi)
+    zi = scipy.interpolate.griddata(
+        (x_list, y_list), z_list, (xi, yi), method='linear')
 
-    plt.contourf(xi, yi, zi, 20)
+    plt.imshow(zi, vmin=z_list.min(), vmax=z_list.max(), origin='lower',
+               extent=[x_list.min(), x_list.max(), y_list.min(), y_list.max()])
     plt.colorbar()
     plt.show()
 

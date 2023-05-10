@@ -137,7 +137,7 @@ class NavierStokes(DomainEquation):
         loss_2 = results_u*dv_dx + results_v * dv_dy + \
             dp_dy - 1/self._reynoldNumber * (dv2_dx2 + dv2_dy2)
 
-        loss_3 = du_dx + du_dy
+        loss_3 = du_dx + dv_dy
 
         f = torch.cat((loss_1, loss_2, loss_3))
 
